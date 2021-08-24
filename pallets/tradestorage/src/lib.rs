@@ -55,6 +55,12 @@ pub mod tradestorage {
     pub(super) type TradeMap<T> = StorageMap<_, Blake2_128Concat, Vec<u8>, Option<(AccountId, AccountId, u32, u32)>, ValueQuery>;
 
 
+	#[pallet::storage]
+	#[pallet::getter(fn test_trade_map)]
+	// Learn more about declaring storage items:
+	// https://substrate.dev/docs/en/knowledgebase/runtime/storage#declaring-storage-items
+    pub(super) type TestTradeMap<T> = StorageMap<_, Blake2_128Concat, u32, u32, ValueQuery>;
+
     #[pallet::storage]
 	#[pallet::getter(fn simulation_market_map)]
 	// Learn more about declaring storage items:
@@ -68,6 +74,7 @@ pub mod tradestorage {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
         TradeMapStored(Vec<u8>, Vec<u8>, u32, Vec<u8>, AccountId, AccountId, u32, u32),
+		TestTradeMapStored(u32),
 	}
 
 
@@ -90,9 +97,11 @@ pub mod tradestorage {
 			let _trade_id = trade_id.clone();
 			let trade_struct = TradeStruct {trade_id: _trade_id.clone(), buyer: _buyer.clone(), seller: _seller.clone(), energy, rate};
 			let market_struct = MarketTradeStruct {market_slot: market_slot, trades: trade_struct};
-			<TradeMap<T>>::insert(&trade_id, Some((_buyer.clone(), _seller.clone(), energy, rate)));
-			<SimulationMarketMap<T>>::insert((&simulation_id, &market_id), market_struct);
-			Self::deposit_event(Event::TradeMapStored(simulation_id, market_id, market_slot, trade_id, _buyer, _seller, energy, rate));
+			<TestTradeMap<T>>::insert(market_slot, energy);
+			Self::deposit_event(Event::TestTradeMapStored(market_slot));
+			//<TradeMap<T>>::insert(&trade_id, Some((_buyer.clone(), _seller.clone(), energy, rate)));
+			//<SimulationMarketMap<T>>::insert((&simulation_id, &market_id), market_struct);
+			//Self::deposit_event(Event::TradeMapStored(simulation_id, market_id, market_slot, trade_id, _buyer, _seller, energy, rate));
 			Ok(())
 		}
 	}
