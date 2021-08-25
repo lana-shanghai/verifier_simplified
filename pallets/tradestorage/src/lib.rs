@@ -89,21 +89,21 @@ pub mod tradestorage {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(100_000 + T::DbWeight::get().writes(1))]
+		#[pallet::weight(100_000 + T::DbWeight::get().reads_writes(1,1))]
 		pub fn store_trade_map(
 				origin:OriginFor<T>, 
 				//simulation_id:Vec<u8>, 
 				//market_id:Vec<u8>, 
 				market_slot: u32, 
 				//trade_id:Vec<u8>, 
-				buyer: AccountId, 
-				seller: AccountId, 
+				//buyer: AccountId, 
+				//seller: AccountId, 
 				energy: u32, 
 				//rate: u32
 			) -> DispatchResult {
 			let _caller = ensure_signed(origin)?;
-			let _buyer = buyer.clone();
-			let _seller = seller.clone();
+			//let _buyer = buyer.clone();
+			//let _seller = seller.clone();
 			//let _trade_id = trade_id.clone();
 			//let trade_struct = TradeStruct {trade_id: _trade_id.clone(), buyer: _buyer.clone(), seller: _seller.clone(), energy, rate};
 			//let market_struct = MarketTradeStruct {market_slot: market_slot, trades: trade_struct};
