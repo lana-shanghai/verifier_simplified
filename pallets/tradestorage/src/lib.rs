@@ -89,7 +89,7 @@ pub mod tradestorage {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(10_000_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(126_000_000 + T::DbWeight::get().reads_writes(1,1))]
 		pub fn store_trade_map(
 				origin:OriginFor<T>, 
 				//simulation_id:Vec<u8>, 
