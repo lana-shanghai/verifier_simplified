@@ -96,10 +96,10 @@ pub mod tradestorage {
 				//market_id:Vec<u8>,
 				market_slot: u32, 
 				//trade_id:Vec<u8>, 
-				//buyer: AccountId, 
+				buyer: AccountId, 
 				//seller: AccountId, 
 				energy: u32, 
-				//rate: u32
+				rate: u32
 			) -> DispatchResult {
 			let _caller = ensure_signed(origin)?;
 			//let _buyer = buyer.clone();
