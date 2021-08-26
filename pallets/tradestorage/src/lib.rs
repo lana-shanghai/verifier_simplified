@@ -92,8 +92,10 @@ pub mod tradestorage {
 		#[pallet::weight(500_000 + T::DbWeight::get().reads_writes(1,1))]
 		pub fn store_trade_map(
 				origin:OriginFor<T>, 
-				simulation_id:Vec<u8>, 
-				market_id:Vec<u8>, 
+				//simulation_id:Vec<u8>, 
+				//market_id:Vec<u8>, 
+				simulation_id:u32, 
+				market_id:u32, 
 				market_slot: u32, 
 				//trade_id:Vec<u8>, 
 				//buyer: AccountId, 
