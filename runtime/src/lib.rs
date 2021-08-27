@@ -22,6 +22,8 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use pallet_contracts::weights::WeightInfo;
+
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -125,6 +127,19 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
+// Contracts price units.
+pub const MILLICENTS: Balance = 1_000_000_000;
+pub const CENTS: Balance = 1_000 * MILLICENTS;
+pub const DOLLARS: Balance = 100 * CENTS;
+
+const fn deposit(items: u32, bytes: u32) -> Balance {
+   items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+}
+
+/// We assume that ~10% of the block weight is consumed by `on_initialize` handlers.
+/// This is used to limit the maximal weight of a single extrinsic.
+const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
+
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
@@ -144,6 +159,60 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
+parameter_types! {
+	pub TombstoneDeposit: Balance = deposit(
+	   1,
+	   <pallet_contracts::Pallet<Runtime>>::contract_info_size()
+	);
+	pub DepositPerContract: Balance = TombstoneDeposit::get();
+	pub const DepositPerStorageByte: Balance = deposit(0, 1);
+	pub const DepositPerStorageItem: Balance = deposit(1, 0);
+	pub RentFraction: Perbill = Perbill::from_rational(1u32, 30 * DAYS);
+	pub const SurchargeReward: Balance = 150 * MILLICENTS;
+	pub const SignedClaimHandicap: u32 = 2;
+	pub const MaxValueSize: u32 = 16 * 1024;
+	// The lazy deletion runs inside on_initialize.
+	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO *
+	   BlockWeights::get().max_block;
+	// The weight needed for decoding the queue should be less or equal than a fifth
+	// of the overall weight dedicated to the lazy deletion.
+	pub DeletionQueueDepth: u32 = ((DeletionWeightLimit::get() / (
+		  <Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(1) -
+		  <Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(0)
+	   )) / 5) as u32;
+ 
+	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
+ }
+ 
+ impl pallet_contracts::Config for Runtime {
+	type Time = Timestamp;
+	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
+	type Event = Event;
+	type RentPayment = ();
+	type SignedClaimHandicap = SignedClaimHandicap;
+	type TombstoneDeposit = TombstoneDeposit;
+	type DepositPerContract = DepositPerContract;
+	type DepositPerStorageByte = DepositPerStorageByte;
+	type DepositPerStorageItem = DepositPerStorageItem;
+	type RentFraction = RentFraction;
+	type SurchargeReward = SurchargeReward;
+	type WeightPrice = pallet_transaction_payment::Module<Self>;
+	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
+	type ChainExtension = ();
+	type DeletionQueueDepth = DeletionQueueDepth;
+	type DeletionWeightLimit = DeletionWeightLimit;
+	//type Call = Call;
+	 /// The safest default is to allow no calls at all.
+	 ///
+	 /// Runtimes should whitelist dispatchables that are allowed to be called from contracts
+	 /// and make sure they are stable. Dispatchables exposed to contracts are not allowed to
+	 /// change because that would break already deployed contracts. The `Call` structure itself
+	 /// is not allowed to change the indices of existing pallets, too.
+	 //type CallFilter = DenyAll;
+	 type Schedule = Schedule;
+	 type CallStack = [pallet_contracts::Frame<Self>; 31];
+ }
 // Configure FRAME pallets to include in runtime.
 
 impl frame_system::Config for Runtime {
@@ -295,6 +364,7 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Config<T>},
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		// Include the custom logic from the pallet-template in the runtime.
